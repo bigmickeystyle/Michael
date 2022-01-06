@@ -4,25 +4,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import timber.log.Timber
 
-sealed class MichaelState {
+sealed class MichaelState(val word: String) {
 
-    object Start : MichaelState()
+    object Start : MichaelState("michael")
 
-    data class Playing(val tiles: List<Tile>) : MichaelState()
+    data class Playing(val tiles: List<Tile>) : MichaelState("start")
 }
 
-data class Tile(val character: String, val tileState: TileState)
+data class Tile(val character: Char, val tileState: TileState)
 
 enum class TileState {
     GUESSING, EXACT_MATCH, PARTIAL_MATCH, NO_MATCH
 }
 
 class MichaelViewModel : ViewModel() {
-    var gameState: MichaelState by mutableStateOf(MichaelState.Start)
+
+    var gameState by mutableStateOf<MichaelState>(MichaelState.Start)
 
     fun onTileClick(text: String) {
-        Timber.i(text)
+        gameState = when (gameState) {
+            is MichaelState.Playing -> MichaelState.Start
+            MichaelState.Start -> MichaelState.Playing(listOf())
+        }
     }
 }

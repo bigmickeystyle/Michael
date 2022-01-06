@@ -45,7 +45,7 @@ fun LetterRow(tiles: List<Tile>, size: Dp, onTileClick: (String) -> Unit) {
         Modifier.fillMaxWidth()
     ) {
         tiles.forEach {
-            LetterTile(text = it.character, size = size, onTileClick)
+            LetterTile(text = it.character.uppercaseChar().toString(), size = size, onTileClick)
         }
     }
 }

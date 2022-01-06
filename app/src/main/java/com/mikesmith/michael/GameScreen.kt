@@ -18,7 +18,7 @@ import timber.log.Timber
 @Composable
 fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 
-    val tileSize = ((screenWidth.value - 40f) / 5) - 12
+    fun tileSize() = ((screenWidth.value - 40f) / viewModel.gameState.word.length) - 12
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Row(
@@ -44,11 +44,14 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
             )
         }
         Row(Modifier.padding(20.dp)) {
+            val currentTileSize = tileSize()
             when (viewModel.gameState) {
-                is MichaelState.Playing -> EmptyGame(tileSize.dp) { text ->
+                is MichaelState.Playing -> EmptyGame(viewModel.gameState.word,
+                    currentTileSize.dp) { text ->
                     viewModel.onTileClick(text)
                 }
-                MichaelState.Start -> EmptyGame(tileSize.dp) { text ->
+                MichaelState.Start -> EmptyGame(viewModel.gameState.word,
+                    currentTileSize.dp) { text ->
                     viewModel.onTileClick(text)
                 }
             }
@@ -58,62 +61,16 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 }
 
 @Composable
-fun EmptyGame(tileSize: Dp, onTileClick: (String) -> Unit) {
+fun EmptyGame(word: String, tileSize: Dp, onTileClick: (String) -> Unit) {
     Column {
-        LetterRow(
-            listOf(
-                Tile("C", TileState.GUESSING),
-                Tile("L", TileState.GUESSING),
-                Tile("O", TileState.GUESSING),
-                Tile("N", TileState.GUESSING),
-                Tile("E", TileState.GUESSING),
-            ),
-            tileSize,
-            onTileClick
-        )
-        LetterRow(
-            listOf(
-                Tile("C", TileState.GUESSING),
-                Tile("L", TileState.GUESSING),
-                Tile("O", TileState.GUESSING),
-                Tile("N", TileState.GUESSING),
-                Tile("E", TileState.GUESSING),
-            ),
-            tileSize,
-            onTileClick
-        )
-        LetterRow(
-            listOf(
-                Tile("C", TileState.GUESSING),
-                Tile("L", TileState.GUESSING),
-                Tile("O", TileState.GUESSING),
-                Tile("N", TileState.GUESSING),
-                Tile("E", TileState.GUESSING),
-            ),
-            tileSize,
-            onTileClick
-        )
-        LetterRow(
-            listOf(
-                Tile("C", TileState.GUESSING),
-                Tile("L", TileState.GUESSING),
-                Tile("O", TileState.GUESSING),
-                Tile("N", TileState.GUESSING),
-                Tile("E", TileState.GUESSING),
-            ),
-            tileSize,
-            onTileClick
-        )
-        LetterRow(
-            listOf(
-                Tile("C", TileState.GUESSING),
-                Tile("L", TileState.GUESSING),
-                Tile("O", TileState.GUESSING),
-                Tile("N", TileState.GUESSING),
-                Tile("E", TileState.GUESSING),
-            ),
-            tileSize,
-            onTileClick
-        )
+        repeat(word.length) {
+            LetterRow(
+                word.map {
+                    Tile(it, TileState.GUESSING)
+                },
+                tileSize,
+                onTileClick
+            )
+        }
     }
 }
