@@ -11,13 +11,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun LetterTile(
     text: String,
     size: Dp,
+    fontSize: TextUnit,
     onTileClick: (String) -> Unit,
 ) {
 
@@ -33,19 +36,18 @@ fun LetterTile(
     ) {
         Text(
             text = text,
-            fontSize = 32.sp
+            fontSize = fontSize
         )
     }
-
 }
 
 @Composable
-fun LetterRow(tiles: List<Tile>, size: Dp, onTileClick: (String) -> Unit) {
+fun LetterRow(tiles: List<Tile>, size: Dp, fontSize: TextUnit, onTileClick: (String) -> Unit) {
     Row(
         Modifier.fillMaxWidth()
     ) {
         tiles.forEach {
-            LetterTile(text = it.character.uppercaseChar().toString(), size = size, onTileClick)
+            LetterTile(text = it.character.uppercaseChar().toString(), size = size, fontSize = fontSize, onTileClick)
         }
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,6 +20,7 @@ import timber.log.Timber
 fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 
     fun tileSize() = ((screenWidth.value - 40f) / viewModel.gameState.word.length) - 12
+    fun fontSize() = 200 / viewModel.gameState.word.length
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Row(
@@ -45,23 +47,26 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
         }
         Row(Modifier.padding(20.dp)) {
             val currentTileSize = tileSize()
-            when (viewModel.gameState) {
-                is MichaelState.Playing -> EmptyGame(viewModel.gameState.word,
-                    currentTileSize.dp) { text ->
-                    viewModel.onTileClick(text)
-                }
-                MichaelState.Start -> EmptyGame(viewModel.gameState.word,
-                    currentTileSize.dp) { text ->
-                    viewModel.onTileClick(text)
-                }
-            }
+            val fontSize = fontSize()
 
+            when (viewModel.gameState) {
+                is MichaelState.Playing -> EmptyGame(
+                    viewModel.gameState.word,
+                    currentTileSize.dp,
+                    fontSize.sp,
+                    ) { text -> viewModel.onTileClick(text) }
+                MichaelState.Start -> EmptyGame(
+                    viewModel.gameState.word,
+                    currentTileSize.dp,
+                    fontSize.sp,
+                    ) { text -> viewModel.onTileClick(text) }
+            }
         }
     }
 }
 
 @Composable
-fun EmptyGame(word: String, tileSize: Dp, onTileClick: (String) -> Unit) {
+fun EmptyGame(word: String, tileSize: Dp, fontSize: TextUnit, onTileClick: (String) -> Unit) {
     Column {
         repeat(word.length) {
             LetterRow(
@@ -69,6 +74,7 @@ fun EmptyGame(word: String, tileSize: Dp, onTileClick: (String) -> Unit) {
                     Tile(it, TileState.GUESSING)
                 },
                 tileSize,
+                fontSize,
                 onTileClick
             )
         }
