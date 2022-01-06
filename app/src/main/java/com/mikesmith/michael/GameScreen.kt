@@ -1,24 +1,26 @@
 package com.mikesmith.michael
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import timber.log.Timber
 
 @Composable
 fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 
     val tileSize = ((screenWidth.value - 40f) / 5) - 12
 
-    Column {
+    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -42,9 +44,13 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
             )
         }
         Row(Modifier.padding(20.dp)) {
-            when(viewModel.gameState) {
-                is MichaelState.Playing -> EmptyGame(tileSize.dp)
-                MichaelState.Start -> EmptyGame(tileSize.dp)
+            when (viewModel.gameState) {
+                is MichaelState.Playing -> EmptyGame(tileSize.dp) { text ->
+                    viewModel.onTileClick(text)
+                }
+                MichaelState.Start -> EmptyGame(tileSize.dp) { text ->
+                    viewModel.onTileClick(text)
+                }
             }
 
         }
@@ -52,7 +58,7 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 }
 
 @Composable
-fun EmptyGame(tileSize: Dp) {
+fun EmptyGame(tileSize: Dp, onTileClick: (String) -> Unit) {
     Column {
         LetterRow(
             listOf(
@@ -62,7 +68,8 @@ fun EmptyGame(tileSize: Dp) {
                 Tile("N", TileState.GUESSING),
                 Tile("E", TileState.GUESSING),
             ),
-            tileSize
+            tileSize,
+            onTileClick
         )
         LetterRow(
             listOf(
@@ -72,7 +79,8 @@ fun EmptyGame(tileSize: Dp) {
                 Tile("N", TileState.GUESSING),
                 Tile("E", TileState.GUESSING),
             ),
-            tileSize
+            tileSize,
+            onTileClick
         )
         LetterRow(
             listOf(
@@ -82,7 +90,8 @@ fun EmptyGame(tileSize: Dp) {
                 Tile("N", TileState.GUESSING),
                 Tile("E", TileState.GUESSING),
             ),
-            tileSize
+            tileSize,
+            onTileClick
         )
         LetterRow(
             listOf(
@@ -92,7 +101,8 @@ fun EmptyGame(tileSize: Dp) {
                 Tile("N", TileState.GUESSING),
                 Tile("E", TileState.GUESSING),
             ),
-            tileSize
+            tileSize,
+            onTileClick
         )
         LetterRow(
             listOf(
@@ -102,7 +112,8 @@ fun EmptyGame(tileSize: Dp) {
                 Tile("N", TileState.GUESSING),
                 Tile("E", TileState.GUESSING),
             ),
-            tileSize
+            tileSize,
+            onTileClick
         )
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import timber.log.Timber
 
 sealed class MichaelState {
 
@@ -20,4 +21,8 @@ enum class TileState {
 
 class MichaelViewModel : ViewModel() {
     var gameState: MichaelState by mutableStateOf(MichaelState.Start)
+
+    fun onTileClick(text: String) {
+        Timber.i(text)
+    }
 }
