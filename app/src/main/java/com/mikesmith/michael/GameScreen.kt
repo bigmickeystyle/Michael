@@ -19,7 +19,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 
     fun tileSize() = ((screenWidth.value - 40f) / viewModel.gameState.word.length) - 12
-    fun fontSize() = 200 / viewModel.gameState.word.length
+    fun tileFontSize() = 200 / viewModel.gameState.word.length
+    fun keyboardTileSize() = ((screenWidth.value - 20f) / 10) - 6
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Row(
@@ -46,7 +47,7 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
         }
         Row(Modifier.padding(20.dp)) {
             val currentTileSize = tileSize()
-            val fontSize = fontSize()
+            val fontSize = tileFontSize()
 
             when (val state = viewModel.gameState) {
                 is MichaelState.Playing -> Column {
@@ -69,6 +70,11 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
         }
         if (viewModel.gameState is MichaelState.Idle) {
             StartRow { viewModel.onStartClick("start") }
+        } else {
+            Keyboard(
+                keyboardTileWidth = keyboardTileSize(),
+                keyboardTileHeight = tileSize()
+            )
         }
     }
 }
