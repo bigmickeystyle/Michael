@@ -66,14 +66,46 @@ class MichaelViewModel : ViewModel() {
                     gameState = MichaelState.Playing(
                         word,
                         activeRow,
-                        newGameStateFromKeyboardClick(clickedLetter)
+                        newTileStateFromKeyboardClick(clickedLetter)
                     )
                 }
             }
         }
     }
 
-    private fun MichaelState.Playing.newGameStateFromKeyboardClick(clickedLetter: Char): List<TileRow> {
+    fun onDeleteClick() {
+        viewModelScope.launch(Dispatchers.IO) {
+            with(gameState) {
+                if (this is MichaelState.Playing) {
+                    gameState = MichaelState.Playing(
+                        word,
+                        activeRow,
+                        newTileStateFromDeleteClick()
+                    )
+                }
+            }
+        }
+    }
+
+    private fun MichaelState.Playing.newTileStateFromDeleteClick(): List<TileRow> {
+        return tiles.foldIndexed(emptyList()) { rowIndex, acc, element ->
+            if (this.activeRow == rowIndex) {
+                acc + element.copy(
+                    tiles = element.tiles.mapIndexed { index, tile ->
+                        when {
+                            tile.character != null && index == element.tiles.size - 1 -> tile.copy(character = null)
+                            tile.character != null && element.tiles[index + 1].character == null -> tile.copy(character = null)
+                            else -> tile
+                        }
+                    }
+                )
+            } else {
+                acc + element
+            }
+        }
+    }
+
+    private fun MichaelState.Playing.newTileStateFromKeyboardClick(clickedLetter: Char): List<TileRow> {
         return tiles.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(

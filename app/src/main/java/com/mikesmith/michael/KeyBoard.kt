@@ -18,6 +18,7 @@ fun Keyboard(
     keyboardTileWidth: Float,
     keyboardTileHeight: Float,
     onTileClick: (Char) -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     Row(
         Modifier.fillMaxWidth(),
@@ -85,6 +86,7 @@ fun Keyboard(
                 .padding(1.dp)
                 .width(keyboardTileWidth.dp * 4)
                 .height(keyboardTileHeight.dp)
+                .clickable { onDeleteClick() }
         ) {
             Text(
                 text = "<- DEL",

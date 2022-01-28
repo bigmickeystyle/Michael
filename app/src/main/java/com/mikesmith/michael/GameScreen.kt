@@ -73,10 +73,10 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
         } else {
             Keyboard(
                 keyboardTileWidth = keyboardTileSize(),
-                keyboardTileHeight = tileSize()
-            ) {
-                clickedLetter -> viewModel.onKeyboardClick(clickedLetter)
-            }
+                keyboardTileHeight = tileSize(),
+                onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
+                onDeleteClick = { viewModel.onDeleteClick() }
+            )
         }
     }
 }
