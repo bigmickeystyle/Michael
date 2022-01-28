@@ -74,7 +74,9 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
             Keyboard(
                 keyboardTileWidth = keyboardTileSize(),
                 keyboardTileHeight = tileSize()
-            )
+            ) {
+                clickedLetter -> viewModel.onKeyboardClick(clickedLetter)
+            }
         }
     }
 }

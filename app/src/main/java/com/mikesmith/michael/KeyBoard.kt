@@ -9,12 +9,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-@Composable
-fun Keyboard(keyboardTileWidth: Float, keyboardTileHeight: Float) {
-    val keyboardFirstLine = listOf("Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P")
-    val keyboardSecondLine = listOf("A", "S", "D", "F", "G", "H", "J", "K", "L")
-    val keyboardThirdLine = listOf("Z", "X", "C", "V", "B", "N", "M")
+val keyboardFirstLine = "QWERTYUIOP".toCharArray()
+val keyboardSecondLine = "ASDFGHJKL".toCharArray()
+val keyboardThirdLine = "ZXCVBNM".toCharArray()
 
+@Composable
+fun Keyboard(
+    keyboardTileWidth: Float,
+    keyboardTileHeight: Float,
+    onTileClick: (Char) -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
@@ -24,7 +28,8 @@ fun Keyboard(keyboardTileWidth: Float, keyboardTileHeight: Float) {
                 keyboardTileWidth = keyboardTileWidth,
                 keyboardTileHeight = keyboardTileHeight,
                 text = it,
-            ) {}
+                onTileClick = onTileClick
+            )
         }
     }
 
@@ -37,7 +42,8 @@ fun Keyboard(keyboardTileWidth: Float, keyboardTileHeight: Float) {
                 keyboardTileWidth = keyboardTileWidth,
                 keyboardTileHeight = keyboardTileHeight,
                 text = it,
-            ) {}
+                onTileClick = onTileClick
+            )
         }
     }
 
@@ -50,7 +56,8 @@ fun Keyboard(keyboardTileWidth: Float, keyboardTileHeight: Float) {
                 keyboardTileWidth = keyboardTileWidth,
                 keyboardTileHeight = keyboardTileHeight,
                 text = it,
-            ) {}
+                onTileClick = onTileClick
+            )
         }
     }
 
@@ -92,8 +99,8 @@ fun Keyboard(keyboardTileWidth: Float, keyboardTileHeight: Float) {
 fun KeyboardKey(
     keyboardTileWidth: Float,
     keyboardTileHeight: Float,
-    text: String,
-    onTileClick: () -> Unit,
+    text: Char,
+    onTileClick: (Char) -> Unit,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -102,10 +109,10 @@ fun KeyboardKey(
             .padding(1.dp)
             .width(keyboardTileWidth.dp)
             .height(keyboardTileHeight.dp)
-            .clickable { onTileClick() }
+            .clickable { onTileClick(text) }
     ) {
         Text(
-            text = text,
+            text = text.toString(),
             fontSize = 16.sp
         )
     }

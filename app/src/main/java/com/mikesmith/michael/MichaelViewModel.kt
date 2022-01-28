@@ -51,7 +51,7 @@ class MichaelViewModel : ViewModel() {
                         gameState = MichaelState.Playing(
                             word,
                             activeRow,
-                            newGameState(clickData)
+                            newTilesFromTileClick(clickData)
                         )
                     }
                 }
@@ -59,12 +59,44 @@ class MichaelViewModel : ViewModel() {
         }
     }
 
-    private fun MichaelState.Playing.newGameState(clickData: MichaelClickData): List<TileRow> {
+    fun onKeyboardClick(clickedLetter: Char) {
+        viewModelScope.launch(Dispatchers.IO) {
+            with(gameState) {
+                if (this is MichaelState.Playing) {
+                    gameState = MichaelState.Playing(
+                        word,
+                        activeRow,
+                        newGameStateFromKeyboardClick(clickedLetter)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun MichaelState.Playing.newGameStateFromKeyboardClick(clickedLetter: Char): List<TileRow> {
         return tiles.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(
                     tiles = element.tiles.mapIndexed { index, tile ->
-                        when  {
+                        when {
+                            tile.character == null && index == 0 -> tile.copy(character = clickedLetter)
+                            tile.character == null && element.tiles[index - 1].character != null -> tile.copy(character = clickedLetter)
+                            else -> tile
+                        }
+                    }
+                )
+            } else {
+                acc + element
+            }
+        }
+    }
+
+    private fun MichaelState.Playing.newTilesFromTileClick(clickData: MichaelClickData): List<TileRow> {
+        return tiles.foldIndexed(emptyList()) { rowIndex, acc, element ->
+            if (this.activeRow == rowIndex) {
+                acc + element.copy(
+                    tiles = element.tiles.mapIndexed { index, tile ->
+                        when {
                             index == clickData.wordPosition -> tile.copy(tileState = clickData.newState())
                             tile.tileState == TileState.GUESSING -> tile.copy(tileState = TileState.IDLE)
                             else -> tile
