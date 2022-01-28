@@ -1,12 +1,16 @@
 package com.mikesmith.michael
 
+import androidx.compose.material.Snackbar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mikesmith.michael.network.DictionaryService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed class MichaelState(open val word: String) {
 
@@ -26,7 +30,10 @@ enum class TileState {
     IDLE, GUESSING, RIGHT, GOOD_BUT_NOT_RIGHT, NO_MATCH
 }
 
-class MichaelViewModel : ViewModel() {
+@HiltViewModel
+class MichaelViewModel @Inject constructor(
+    private val dictionaryService: DictionaryService,
+) : ViewModel() {
     var gameState by mutableStateOf<MichaelState>(MichaelState.Idle)
 
     fun onStartClick(word: String) {
@@ -91,11 +98,19 @@ class MichaelViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
                 if (this is MichaelState.Playing) {
-                    gameState = MichaelState.Playing(
-                        word,
-                        activeRow + 1,
-                        tileRows
-                    )
+                    val dictionaryResponse =
+                        dictionaryService.checkValidity(this.tileRows[activeRow].tiles.map { it.character }
+                            .joinToString(""))
+
+                    when (dictionaryResponse.code()) {
+                        200 -> gameState = MichaelState.Playing(
+                            word,
+                            activeRow + 1,
+                            tileRows
+                        )
+                        else -> println("not a word")
+                    }
+
                 }
             }
         }
