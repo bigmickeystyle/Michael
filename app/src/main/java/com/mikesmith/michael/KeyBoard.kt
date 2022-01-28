@@ -17,8 +17,10 @@ val keyboardThirdLine = "ZXCVBNM".toCharArray()
 fun Keyboard(
     keyboardTileWidth: Float,
     keyboardTileHeight: Float,
+    enterEnabled: Boolean,
     onTileClick: (Char) -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onEnterClick: () -> Unit
 ) {
     Row(
         Modifier.fillMaxWidth(),
@@ -73,6 +75,7 @@ fun Keyboard(
                 .padding(1.dp)
                 .width(keyboardTileWidth.dp * 4)
                 .height(keyboardTileHeight.dp)
+                .clickable { if (enterEnabled) onEnterClick() else Unit }
         ) {
             Text(
                 text = "ENTER",

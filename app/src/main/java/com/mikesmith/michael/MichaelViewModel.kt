@@ -15,7 +15,7 @@ sealed class MichaelState(open val word: String) {
     data class Playing(
         override val word: String,
         val activeRow: Int,
-        val tiles: List<TileRow>,
+        val tileRows: List<TileRow>,
     ) : MichaelState(word)
 }
 
@@ -87,14 +87,30 @@ class MichaelViewModel : ViewModel() {
         }
     }
 
+    fun onEnterClick() {
+        viewModelScope.launch(Dispatchers.IO) {
+            with(gameState) {
+                if (this is MichaelState.Playing) {
+                    gameState = MichaelState.Playing(
+                        word,
+                        activeRow + 1,
+                        tileRows
+                    )
+                }
+            }
+        }
+    }
+
     private fun MichaelState.Playing.newTileStateFromDeleteClick(): List<TileRow> {
-        return tiles.foldIndexed(emptyList()) { rowIndex, acc, element ->
+        return tileRows.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(
                     tiles = element.tiles.mapIndexed { index, tile ->
                         when {
-                            tile.character != null && index == element.tiles.size - 1 -> tile.copy(character = null)
-                            tile.character != null && element.tiles[index + 1].character == null -> tile.copy(character = null)
+                            tile.character != null && index == element.tiles.size - 1 -> tile.copy(
+                                character = null)
+                            tile.character != null && element.tiles[index + 1].character == null -> tile.copy(
+                                character = null)
                             else -> tile
                         }
                     }
@@ -106,13 +122,14 @@ class MichaelViewModel : ViewModel() {
     }
 
     private fun MichaelState.Playing.newTileStateFromKeyboardClick(clickedLetter: Char): List<TileRow> {
-        return tiles.foldIndexed(emptyList()) { rowIndex, acc, element ->
+        return tileRows.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(
                     tiles = element.tiles.mapIndexed { index, tile ->
                         when {
                             tile.character == null && index == 0 -> tile.copy(character = clickedLetter)
-                            tile.character == null && element.tiles[index - 1].character != null -> tile.copy(character = clickedLetter)
+                            tile.character == null && element.tiles[index - 1].character != null -> tile.copy(
+                                character = clickedLetter)
                             else -> tile
                         }
                     }
@@ -124,7 +141,7 @@ class MichaelViewModel : ViewModel() {
     }
 
     private fun MichaelState.Playing.newTilesFromTileClick(clickData: MichaelClickData): List<TileRow> {
-        return tiles.foldIndexed(emptyList()) { rowIndex, acc, element ->
+        return tileRows.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(
                     tiles = element.tiles.mapIndexed { index, tile ->

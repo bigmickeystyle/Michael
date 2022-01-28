@@ -51,7 +51,7 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 
             when (val state = viewModel.gameState) {
                 is MichaelState.Playing -> Column {
-                    state.tiles.mapIndexed { index, tileRow ->
+                    state.tileRows.mapIndexed { index, tileRow ->
                         LetterRow(
                             tiles = tileRow.tiles,
                             tryPosition = index,
@@ -68,15 +68,18 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                 )
             }
         }
-        if (viewModel.gameState is MichaelState.Idle) {
-            StartRow { viewModel.onStartClick("start") }
-        } else {
-            Keyboard(
-                keyboardTileWidth = keyboardTileSize(),
-                keyboardTileHeight = tileSize(),
-                onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
-                onDeleteClick = { viewModel.onDeleteClick() }
-            )
+        when (val state = viewModel.gameState) {
+            MichaelState.Idle -> StartRow { viewModel.onStartClick("start") }
+            is MichaelState.Playing -> {
+                Keyboard(
+                    keyboardTileWidth = keyboardTileSize(),
+                    keyboardTileHeight = tileSize(),
+                    enterEnabled = state.tileRows[state.activeRow].tiles.last().character != null,
+                    onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
+                    onDeleteClick = { viewModel.onDeleteClick() },
+                    onEnterClick = { viewModel.onEnterClick() }
+                )
+            }
         }
     }
 }
