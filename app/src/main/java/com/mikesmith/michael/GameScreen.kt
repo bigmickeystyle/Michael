@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import timber.log.Timber
 
 @Composable
 fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
@@ -49,34 +48,47 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
             val currentTileSize = tileSize()
             val fontSize = fontSize()
 
-            when (viewModel.gameState) {
-                is MichaelState.Playing -> EmptyGame(
+            when (val state = viewModel.gameState) {
+                is MichaelState.Playing -> Column {
+                    state.tiles.mapIndexed { index, tileRow ->
+                        LetterRow(
+                            tiles = tileRow.tiles,
+                            tryPosition = index,
+                            size = currentTileSize.dp,
+                            fontSize = fontSize.sp,
+                            onTileClick = { click -> viewModel.onTileClick(click) }
+                        )
+                    }
+                }
+                MichaelState.Idle -> EmptyGame(
                     viewModel.gameState.word,
                     currentTileSize.dp,
                     fontSize.sp,
-                    ) { text -> viewModel.onTileClick(text) }
-                MichaelState.Start -> EmptyGame(
-                    viewModel.gameState.word,
-                    currentTileSize.dp,
-                    fontSize.sp,
-                    ) { text -> viewModel.onTileClick(text) }
+                )
             }
+        }
+        if (viewModel.gameState is MichaelState.Idle) {
+            StartRow { viewModel.onStartClick("start") }
         }
     }
 }
 
 @Composable
-fun EmptyGame(word: String, tileSize: Dp, fontSize: TextUnit, onTileClick: (String) -> Unit) {
+fun EmptyGame(
+    word: String,
+    tileSize: Dp,
+    fontSize: TextUnit,
+) {
     Column {
-        repeat(word.length) {
+        word.mapIndexed { index, _ ->
             LetterRow(
                 word.map {
-                    Tile(it, TileState.GUESSING)
+                    Tile(TileState.IDLE, it)
                 },
+                index,
                 tileSize,
-                fontSize,
-                onTileClick
-            )
+                fontSize
+            ) {}
         }
     }
 }
