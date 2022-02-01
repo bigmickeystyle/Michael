@@ -10,16 +10,22 @@ import com.mikesmith.michael.network.DictionaryService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 sealed class MichaelState(open val word: String) {
 
     object Idle : MichaelState("michael")
 
+    object Loading : MichaelState("michael")
+
+    object Error : MichaelState("michael")
+
     data class Playing(
         override val word: String,
         val activeRow: Int,
         val tileRows: List<TileRow>,
+        val showSnackbar: Boolean = false,
     ) : MichaelState(word)
 }
 
@@ -31,9 +37,12 @@ enum class TileState {
 }
 
 @HiltViewModel
-class MichaelViewModel @Inject constructor(
+class MichaelViewModel
+@Inject
+constructor(
     private val dictionaryService: DictionaryService,
 ) : ViewModel() {
+
     var gameState by mutableStateOf<MichaelState>(MichaelState.Idle)
 
     fun onStartClick(word: String) {
@@ -98,19 +107,29 @@ class MichaelViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
                 if (this is MichaelState.Playing) {
+                    gameState = MichaelState.Loading
+
                     val dictionaryResponse =
                         dictionaryService.checkValidity(this.tileRows[activeRow].tiles.map { it.character }
                             .joinToString(""))
 
-                    when (dictionaryResponse.code()) {
-                        200 -> gameState = MichaelState.Playing(
-                            word,
-                            activeRow + 1,
-                            tileRows
-                        )
-                        else -> println("not a word")
+                    try {
+                        gameState = when (dictionaryResponse.code()) {
+                            200 -> MichaelState.Playing(
+                                word,
+                                activeRow + 1,
+                                tileRows
+                            )
+                            else -> MichaelState.Playing(
+                                word,
+                                activeRow,
+                                tileRows,
+                                true
+                            )
+                        }
+                    } catch (e: IOException) {
+                        gameState = MichaelState.Error
                     }
-
                 }
             }
         }
@@ -183,7 +202,7 @@ class MichaelViewModel @Inject constructor(
         }
 }
 
-class MichaelClickData(
+data class MichaelClickData(
     val tryPosition: Int,
     val wordPosition: Int,
     val currentState: TileState,

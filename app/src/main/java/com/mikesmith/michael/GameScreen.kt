@@ -59,6 +59,9 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                 val fontSize = tileFontSize()
 
                 when (val state = viewModel.gameState) {
+                    is MichaelState.Loading -> Box {
+                        Text(text = "loading")
+                    }
                     is MichaelState.Playing -> Column {
                         state.tileRows.mapIndexed { index, tileRow ->
                             LetterRow(
@@ -85,18 +88,17 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                         keyboardTileHeight = tileSize(),
                         enterEnabled = state.tileRows[state.activeRow].tiles.last().character != null,
                         onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
-                        onDeleteClick = {
-                            scope.launch {
-                                viewModel.onDeleteClick()
-                                snackbarHostState.showSnackbar("test")
-                            }
-                        },
+                        onDeleteClick = { viewModel.onDeleteClick() },
                         onEnterClick = { viewModel.onEnterClick() }
                     )
                 }
             }
         }
-        SnackbarHost(hostState = snackbarHostState)
+        when (val state = viewModel.gameState) {
+            is MichaelState.Playing -> if (state.showSnackbar) scope.launch { snackbarHostState.showSnackbar("not a word") }
+            is MichaelState.Error -> scope.launch { snackbarHostState.showSnackbar("api error try again") }
+        }
+            SnackbarHost(hostState = snackbarHostState)
     }
 }
 
