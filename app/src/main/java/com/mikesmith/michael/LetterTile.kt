@@ -55,6 +55,8 @@ fun LetterRow(
         tiles.mapIndexed { index, tile ->
             val backGround = when (tile.tileState) {
                 TileState.GUESSING -> Color.LightGray
+                TileState.GOOD_BUT_NOT_RIGHT -> Color.Yellow
+                TileState.RIGHT -> Color.Green
                 else -> MaterialTheme.colors.secondary
             }
 

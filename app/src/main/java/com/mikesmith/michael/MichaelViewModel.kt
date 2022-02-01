@@ -1,6 +1,5 @@
 package com.mikesmith.michael
 
-import androidx.compose.material.Snackbar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,22 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
-
-sealed class MichaelState(open val word: String) {
-
-    object Idle : MichaelState("michael")
-
-    object Loading : MichaelState("michael")
-
-    object Error : MichaelState("michael")
-
-    data class Playing(
-        override val word: String,
-        val activeRow: Int,
-        val tileRows: List<TileRow>,
-        val showSnackbar: Boolean = false,
-    ) : MichaelState(word)
-}
 
 data class TileRow(val tiles: List<Tile>)
 data class Tile(val tileState: TileState, val character: Char? = null)
@@ -107,32 +90,55 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
                 if (this is MichaelState.Playing) {
-                    gameState = MichaelState.Loading
+                    gameState = MichaelState.Loading(word)
 
-                    val dictionaryResponse =
-                        dictionaryService.checkValidity(this.tileRows[activeRow].tiles.map { it.character }
-                            .joinToString(""))
+                    val guess = this.tileRows[activeRow].tiles.map { it.character }.joinToString("")
+                    gameState = if (guess.uppercase() == word.uppercase()) {
+                        MichaelState.Won(word)
+                    } else {
+                        try {
+                            val dictionaryResponse = dictionaryService.checkValidity(guess)
 
-                    try {
-                        gameState = when (dictionaryResponse.code()) {
-                            200 -> MichaelState.Playing(
-                                word,
-                                activeRow + 1,
-                                tileRows
-                            )
-                            else -> MichaelState.Playing(
-                                word,
-                                activeRow,
-                                tileRows,
-                                true
-                            )
+                            when (dictionaryResponse.code()) {
+                                200 -> checkWrongGuess()
+                                else -> MichaelState.Playing(
+                                    word,
+                                    activeRow,
+                                    tileRows,
+                                    true
+                                )
+                            }
+                        } catch (e: IOException) {
+                            println(e.message)
+                            MichaelState.Error(word)
                         }
-                    } catch (e: IOException) {
-                        gameState = MichaelState.Error
                     }
                 }
             }
         }
+    }
+
+    private fun MichaelState.Playing.checkWrongGuess(): MichaelState.Playing {
+        return MichaelState.Playing(
+            word,
+            activeRow + 1,
+            tileRows.foldIndexed(emptyList()) { index, acc, tileRow ->
+                if (index == activeRow) {
+                    acc + tileRow.copy(
+                        tiles = tileRow.tiles.mapIndexed { wordIndex, tile ->
+                            when {
+                                tile.character == word[wordIndex] -> tile.copy(tileState = TileState.RIGHT)
+                                tile.character == null -> tile
+                                word.contains(tile.character) -> tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
+                                else -> tile
+                            }
+                        }
+                    )
+                } else {
+                    acc + tileRow
+                }
+            }
+        )
     }
 
     private fun MichaelState.Playing.newTileStateFromDeleteClick(): List<TileRow> {
@@ -200,6 +206,10 @@ constructor(
             TileState.GOOD_BUT_NOT_RIGHT -> TileState.GOOD_BUT_NOT_RIGHT
             TileState.NO_MATCH -> TileState.NO_MATCH
         }
+
+    fun onRestartClick() {
+        gameState = MichaelState.Idle
+    }
 }
 
 data class MichaelClickData(

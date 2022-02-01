@@ -1,5 +1,6 @@
 package com.mikesmith.michael
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,7 +31,7 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
     fun tileFontSize() = 200 / viewModel.gameState.word.length
     fun keyboardTileSize() = ((screenWidth.value - 20f) / 10) - 6
 
-    Box(contentAlignment = Alignment.BottomCenter) {
+    Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.fillMaxHeight()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -40,10 +41,14 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                     .height(IntrinsicSize.Min)
             ) {
                 NavButton()
-                Text(
-                    text = "Michael",
-                    fontSize = 45.sp
-                )
+                Box(modifier = Modifier.clickable {
+                    viewModel.onRestartClick()
+                }) {
+                    Text(
+                        text = "Michael",
+                        fontSize = 45.sp
+                    )
+                }
                 NavButton()
             }
             Row {
@@ -61,6 +66,9 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                 when (val state = viewModel.gameState) {
                     is MichaelState.Loading -> Box {
                         Text(text = "loading")
+                    }
+                    is MichaelState.Won -> Box {
+                        Text(text = "won")
                     }
                     is MichaelState.Playing -> Column {
                         state.tileRows.mapIndexed { index, tileRow ->
@@ -81,7 +89,7 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                 }
             }
             when (val state = viewModel.gameState) {
-                MichaelState.Idle -> StartRow { viewModel.onStartClick("start") }
+                MichaelState.Idle -> StartRow { viewModel.onStartClick(state.word) }
                 is MichaelState.Playing -> {
                     Keyboard(
                         keyboardTileWidth = keyboardTileSize(),
@@ -95,10 +103,12 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
             }
         }
         when (val state = viewModel.gameState) {
-            is MichaelState.Playing -> if (state.showSnackbar) scope.launch { snackbarHostState.showSnackbar("not a word") }
+            is MichaelState.Playing -> if (state.showSnackbar) scope.launch {
+                snackbarHostState.showSnackbar("not a word")
+            }
             is MichaelState.Error -> scope.launch { snackbarHostState.showSnackbar("api error try again") }
         }
-            SnackbarHost(hostState = snackbarHostState)
+        SnackbarHost(hostState = snackbarHostState)
     }
 }
 
