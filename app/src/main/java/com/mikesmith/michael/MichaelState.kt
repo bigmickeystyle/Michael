@@ -1,25 +1,25 @@
 package com.mikesmith.michael
 
-sealed class MichaelState(open val word: String) {
+sealed class MichaelState {
 
-    object Idle : MichaelState("MICHAEL")
+    object Idle : MichaelState()
 
     data class Loading(
-        override val word: String,
-    ) : MichaelState(word)
+        val word: String,
+    ) : MichaelState()
 
     data class Error(
-        override val word: String,
-    ) : MichaelState(word)
+        val word: String,
+    ) : MichaelState()
 
     data class Won(
-        override val word: String,
-    ) : MichaelState(word)
+        val word: String,
+    ) : MichaelState()
 
     data class Playing(
-        override val word: String,
+        val word: String,
         val activeRow: Int,
         val tileRows: List<TileRow>,
         val showSnackbar: Boolean = false,
-    ) : MichaelState(word)
+    ) : MichaelState()
 }

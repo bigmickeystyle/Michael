@@ -1,12 +1,14 @@
 package com.mikesmith.michael
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mikesmith.michael.network.DictionaryService
+import com.mikesmith.michael.network.MichaelService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -23,18 +25,36 @@ enum class TileState {
 class MichaelViewModel
 @Inject
 constructor(
-    private val dictionaryService: DictionaryService,
+    @ApplicationContext private val context: Context,
+    private val michaelService: MichaelService,
 ) : ViewModel() {
 
     var gameState by mutableStateOf<MichaelState>(MichaelState.Idle)
 
-    fun onStartClick(word: String) {
+    private var currentWord: String = "ERROR"
+
+    init {
+        setWord()
+    }
+
+    private val lineList =
+        context.assets.open("words.txt").bufferedReader().use { it.readText() }.split("\n")
+
+    fun setWord() {
+        viewModelScope.launch {
+            michaelService.getWordForToday().body()?.wordForToday?.let { word ->
+                currentWord = word.uppercase()
+            }
+        }
+    }
+
+    fun onStartClick() {
         gameState = MichaelState.Playing(
-            word,
+            currentWord,
             0,
-            word.map {
+            currentWord.map {
                 TileRow(
-                    word.map {
+                    currentWord.map {
                         Tile(TileState.IDLE)
                     }
                 )
@@ -90,23 +110,20 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
                 if (this is MichaelState.Playing) {
-                    gameState = MichaelState.Loading(word)
-
                     val guess = this.tileRows[activeRow].tiles.map { it.character }.joinToString("")
-                    gameState = if (guess.uppercase() == word.uppercase()) {
+                        .uppercase()
+                    gameState = if (guess == word.uppercase()) {
                         MichaelState.Won(word)
                     } else {
                         try {
-                            val dictionaryResponse = dictionaryService.checkValidity(guess)
-
-                            when (dictionaryResponse.code()) {
-                                200 -> checkWrongGuess()
-                                else -> MichaelState.Playing(
+                            when (lineList.find { it.uppercase() == guess }) {
+                                null -> MichaelState.Playing(
                                     word,
                                     activeRow,
                                     tileRows,
                                     true
                                 )
+                                else -> checkWrongGuess()
                             }
                         } catch (e: IOException) {
                             println(e.message)
@@ -119,6 +136,7 @@ constructor(
     }
 
     private fun MichaelState.Playing.checkWrongGuess(): MichaelState.Playing {
+        val cachedWord = word.toMutableList()
         return MichaelState.Playing(
             word,
             activeRow + 1,
@@ -127,10 +145,17 @@ constructor(
                     acc + tileRow.copy(
                         tiles = tileRow.tiles.mapIndexed { wordIndex, tile ->
                             when {
-                                tile.character == word[wordIndex] -> tile.copy(tileState = TileState.RIGHT)
-                                tile.character == null -> tile
-                                word.contains(tile.character) -> tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
-                                else -> tile
+                                tile.character == word[wordIndex] -> {
+                                    tile.copy(tileState = TileState.RIGHT).also {
+                                        cachedWord.remove(tile.character)
+                                    }
+                                }
+                                cachedWord.contains(tile.character) -> {
+                                    tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT).also {
+                                        cachedWord.remove(tile.character)
+                                    }
+                                }
+                                else -> tile.copy(tileState = TileState.NO_MATCH)
                             }
                         }
                     )
@@ -208,7 +233,9 @@ constructor(
         }
 
     fun onRestartClick() {
-        gameState = MichaelState.Idle
+        gameState = MichaelState.Idle.also {
+            setWord()
+        }
     }
 }
 

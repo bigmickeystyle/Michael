@@ -1,10 +1,9 @@
 package com.mikesmith.michael
 
-import com.mikesmith.michael.network.DictionaryService
+import com.mikesmith.michael.network.MichaelService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -15,7 +14,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule{
 
-    private const val BASE_URL = "https://api.dictionaryapi.dev"
+    private const val BASE_URL = "http://michael-env.eba-ind3cyft.us-west-2.elasticbeanstalk.com//"
 
     @Singleton
     @Provides
@@ -35,5 +34,5 @@ object AppModule{
 
     @Singleton
     @Provides
-    fun providesDictionaryService(retrofit: Retrofit): DictionaryService = retrofit.create(DictionaryService::class.java)
+    fun providesMichaelService(retrofit: Retrofit): MichaelService = retrofit.create(MichaelService::class.java)
 }

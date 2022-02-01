@@ -5,6 +5,14 @@ plugins {
     id 'kotlin-kapt'
 }
 
+def getLocalProperties() {
+    Properties props = new Properties()
+    if (file('../local.properties').exists()) {
+        props.load(new FileInputStream(file('../local.properties')))
+    }
+    return props
+}
+
 android {
     compileSdk 32
 
@@ -19,6 +27,8 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+        Properties localProperties = getLocalProperties()
+        buildConfigField("String", "API_KEY", localProperties["API_KEY"])
     }
 
     buildTypes {

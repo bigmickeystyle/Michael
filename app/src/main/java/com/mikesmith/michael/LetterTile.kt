@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.mikesmith.michael.ui.theme.Gold
 
 @Composable
 fun LetterTile(
@@ -55,7 +56,8 @@ fun LetterRow(
         tiles.mapIndexed { index, tile ->
             val backGround = when (tile.tileState) {
                 TileState.GUESSING -> Color.LightGray
-                TileState.GOOD_BUT_NOT_RIGHT -> Color.Yellow
+                TileState.NO_MATCH -> Color.Black
+                TileState.GOOD_BUT_NOT_RIGHT -> Gold
                 TileState.RIGHT -> Color.Green
                 else -> MaterialTheme.colors.secondary
             }

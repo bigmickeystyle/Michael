@@ -21,14 +21,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 
+private val initalWord = "MICHAEL"
+
 @Composable
 fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
-
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    fun tileSize() = ((screenWidth.value - 40f) / viewModel.gameState.word.length) - 12
-    fun tileFontSize() = 200 / viewModel.gameState.word.length
+    fun tileSize(word: String) = ((screenWidth.value - 40f) / word.length) - 12
+    fun tileFontSize(word: String) = 200 / word.length
     fun keyboardTileSize() = ((screenWidth.value - 20f) / 10) - 6
 
     Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.fillMaxHeight()) {
@@ -60,8 +61,6 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                 )
             }
             Row(Modifier.padding(20.dp)) {
-                val currentTileSize = tileSize()
-                val fontSize = tileFontSize()
 
                 when (val state = viewModel.gameState) {
                     is MichaelState.Loading -> Box {
@@ -75,25 +74,25 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                             LetterRow(
                                 tiles = tileRow.tiles,
                                 tryPosition = index,
-                                size = currentTileSize.dp,
-                                fontSize = fontSize.sp,
+                                size = tileSize(state.word).dp,
+                                fontSize = tileFontSize(state.word).sp,
                                 onTileClick = { click -> viewModel.onTileClick(click) }
                             )
                         }
                     }
-                    MichaelState.Idle -> EmptyGame(
-                        viewModel.gameState.word,
-                        currentTileSize.dp,
-                        fontSize.sp,
+                    is MichaelState.Idle -> EmptyGame(
+                        "MICHAEL",
+                        tileSize(initalWord).dp,
+                        tileFontSize(initalWord).sp,
                     )
                 }
             }
             when (val state = viewModel.gameState) {
-                MichaelState.Idle -> StartRow { viewModel.onStartClick(state.word) }
+                is MichaelState.Idle -> StartRow { viewModel.onStartClick() }
                 is MichaelState.Playing -> {
                     Keyboard(
                         keyboardTileWidth = keyboardTileSize(),
-                        keyboardTileHeight = tileSize(),
+                        keyboardTileHeight = tileSize(state.word),
                         enterEnabled = state.tileRows[state.activeRow].tiles.last().character != null,
                         onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
                         onDeleteClick = { viewModel.onDeleteClick() },
