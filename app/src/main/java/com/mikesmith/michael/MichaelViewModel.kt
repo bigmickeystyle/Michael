@@ -179,16 +179,20 @@ constructor(
     }
 
     private fun List<Tile>.almostTiles(correctWord: String): List<Tile> {
+        //this is all bad
+        val cachedWord = correctWord.toMutableList()
         return map { tile ->
-            val matchCount = correctWord
+            val matchCount = cachedWord
                 .count { it == tile.character }
                 .minus(
                     this.count { it.character == tile.character && it.tileState == TileState.RIGHT }
                 )
             if (matchCount > 0 && tile.character != null && correctWord.contains(tile.character)) {
-                tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
+                tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT).also {
+                    cachedWord.remove(it.character)
+                }
             } else {
-                tile
+                tile.copy(tileState = TileState.NO_MATCH)
             }
         }
     }
