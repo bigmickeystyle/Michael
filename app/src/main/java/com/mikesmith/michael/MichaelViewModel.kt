@@ -39,7 +39,7 @@ constructor(
     private val lineList =
         context.assets.open("words.txt").bufferedReader().use { it.readText() }.split("\n")
 
-    fun setWord() {
+    private fun setWord() {
         viewModelScope.launch {
             michaelService.getWordForToday().body()?.wordForToday?.let { word ->
                 currentWord = word.uppercase()
@@ -147,7 +147,6 @@ constructor(
     }
 
     private fun MichaelState.Playing.checkWrongGuess(): MichaelState {
-        val cachedWord = word.toMutableList()
         return if (activeRow + 1 == word.length) {
             MichaelState.Lost
         } else {
@@ -157,22 +156,7 @@ constructor(
                 tileRows.foldIndexed(emptyList()) { index, acc, tileRow ->
                     if (index == activeRow) {
                         acc + tileRow.copy(
-                            tiles = tileRow.tiles.mapIndexed { wordIndex, tile ->
-                                when {
-                                    tile.character == word[wordIndex] -> {
-                                        tile.copy(tileState = TileState.RIGHT).also {
-                                            cachedWord.remove(tile.character)
-                                        }
-                                    }
-                                    cachedWord.contains(tile.character) -> {
-                                        tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
-                                            .also {
-                                                cachedWord.remove(tile.character)
-                                            }
-                                    }
-                                    else -> tile.copy(tileState = TileState.NO_MATCH)
-                                }
-                            }
+                            tiles = tileRow.tiles.correctTiles(word).almostTiles(word)
                         )
                     } else {
                         acc + tileRow
@@ -180,8 +164,30 @@ constructor(
                 }
             )
         }
+    }
 
+    private fun List<Tile>.correctTiles(correctWord: String) = mapIndexed { index, tile ->
+        if (tile.character == correctWord[index]) {
+            tile.copy(tileState = TileState.RIGHT)
+        } else {
+            tile
+        }
+    }
 
+    private fun List<Tile>.almostTiles(correctWord: String): List<Tile> {
+        return map { tile ->
+            val matchCount = correctWord
+                .count { it == tile.character }
+                .minus(
+                    this.count { it.character == tile.character && it.tileState == TileState.RIGHT }
+                )
+
+            if (matchCount > 0 && tile.character != null && correctWord.contains(tile.character)) {
+                tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
+            } else {
+                tile
+            }
+        }
     }
 
     private fun MichaelState.Playing.newTileStateFromDeleteClick(): List<TileRow> {
