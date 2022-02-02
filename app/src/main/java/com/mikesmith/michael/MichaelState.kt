@@ -17,7 +17,10 @@ sealed class MichaelState {
         val tileRows: List<TileRow>,
     ) : MichaelState()
 
-    object Lost : MichaelState()
+    data class Lost(
+        val word: String,
+        val tileRows: List<TileRow>,
+    ) : MichaelState()
 
     data class Playing(
         val word: String,

@@ -78,8 +78,16 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                             )
                         }
                     }
-                    is MichaelState.Lost -> Box {
-                        Text(text = "Lost")
+                    is MichaelState.Lost -> Column {
+                        state.tileRows.mapIndexed { index, tileRow ->
+                            LetterRow(
+                                tiles = tileRow.tiles,
+                                tryPosition = index,
+                                size = tileSize(state.word).dp,
+                                fontSize = tileFontSize(state.word).sp,
+                                shouldDisable = true
+                            )
+                        }
                     }
                     is MichaelState.Playing -> Column {
                         state.tileRows.mapIndexed { index, tileRow ->

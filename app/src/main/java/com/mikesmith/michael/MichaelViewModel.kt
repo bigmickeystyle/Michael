@@ -147,21 +147,25 @@ constructor(
     }
 
     private fun MichaelState.Playing.checkWrongGuess(): MichaelState {
+        val newTiles = tileRows.foldIndexed(emptyList<TileRow>()) { index, acc, tileRow ->
+            if (index == activeRow) {
+                acc + tileRow.copy(
+                    tiles = tileRow.tiles.correctTiles(word).almostTiles(word)
+                )
+            } else {
+                acc + tileRow
+            }
+        }
         return if (activeRow + 1 == word.length) {
-            MichaelState.Lost
+            MichaelState.Lost(
+                word,
+                newTiles
+            )
         } else {
             MichaelState.Playing(
                 word,
                 activeRow + 1,
-                tileRows.foldIndexed(emptyList()) { index, acc, tileRow ->
-                    if (index == activeRow) {
-                        acc + tileRow.copy(
-                            tiles = tileRow.tiles.correctTiles(word).almostTiles(word)
-                        )
-                    } else {
-                        acc + tileRow
-                    }
-                }
+                newTiles
             )
         }
     }
@@ -181,7 +185,6 @@ constructor(
                 .minus(
                     this.count { it.character == tile.character && it.tileState == TileState.RIGHT }
                 )
-
             if (matchCount > 0 && tile.character != null && correctWord.contains(tile.character)) {
                 tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
             } else {
