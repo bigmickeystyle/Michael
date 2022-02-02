@@ -30,7 +30,8 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
 
     fun tileSize(word: String) = ((screenWidth.value - 40f) / word.length) - 12
     fun tileFontSize(word: String) = 200 / word.length
-    fun keyboardTileSize() = ((screenWidth.value - 20f) / 10) - 6
+    fun keyboardTileWidth() = ((screenWidth.value - 20f) / 10) - 6
+    fun keyboardTileHeight() = ((screenWidth.value - 20f) / 6) - 6
 
     Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.fillMaxHeight()) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -102,8 +103,8 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                 is MichaelState.Idle -> StartRow { viewModel.onStartClick() }
                 is MichaelState.Playing -> {
                     Keyboard(
-                        keyboardTileWidth = keyboardTileSize(),
-                        keyboardTileHeight = tileSize(state.word),
+                        keyboardTileWidth = keyboardTileWidth(),
+                        keyboardTileHeight =keyboardTileHeight(),
                         enterEnabled = state.tileRows[state.activeRow].tiles.last().character != null,
                         onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
                         onDeleteClick = { viewModel.onDeleteClick() },
