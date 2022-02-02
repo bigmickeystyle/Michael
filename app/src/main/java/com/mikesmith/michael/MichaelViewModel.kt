@@ -11,7 +11,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.IOException
 import javax.inject.Inject
 
 data class TileRow(val tiles: List<Tile>)
@@ -113,21 +112,16 @@ constructor(
                     val guess = this.tileRows[activeRow].tiles.map { it.character }.joinToString("")
                         .uppercase()
                     gameState = if (guess == word.uppercase()) {
-                        MichaelState.Won(word)
+                        toWonState()
                     } else {
-                        try {
-                            when (lineList.find { it.uppercase() == guess }) {
-                                null -> MichaelState.Playing(
-                                    word,
-                                    activeRow,
-                                    tileRows,
-                                    true
-                                )
-                                else -> checkWrongGuess()
-                            }
-                        } catch (e: IOException) {
-                            println(e.message)
-                            MichaelState.Error(word)
+                        when (lineList.find { it.uppercase() == guess }) {
+                            null -> MichaelState.Playing(
+                                word,
+                                activeRow,
+                                tileRows,
+                                true
+                            )
+                            else -> checkWrongGuess()
                         }
                     }
                 }
@@ -135,28 +129,14 @@ constructor(
         }
     }
 
-    private fun MichaelState.Playing.checkWrongGuess(): MichaelState.Playing {
-        val cachedWord = word.toMutableList()
-        return MichaelState.Playing(
+    private fun MichaelState.Playing.toWonState(): MichaelState {
+        return MichaelState.Won(
             word,
-            activeRow + 1,
             tileRows.foldIndexed(emptyList()) { index, acc, tileRow ->
                 if (index == activeRow) {
                     acc + tileRow.copy(
-                        tiles = tileRow.tiles.mapIndexed { wordIndex, tile ->
-                            when {
-                                tile.character == word[wordIndex] -> {
-                                    tile.copy(tileState = TileState.RIGHT).also {
-                                        cachedWord.remove(tile.character)
-                                    }
-                                }
-                                cachedWord.contains(tile.character) -> {
-                                    tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT).also {
-                                        cachedWord.remove(tile.character)
-                                    }
-                                }
-                                else -> tile.copy(tileState = TileState.NO_MATCH)
-                            }
+                        tiles = tileRow.tiles.map { tile ->
+                            tile.copy(tileState = TileState.RIGHT)
                         }
                     )
                 } else {
@@ -164,6 +144,44 @@ constructor(
                 }
             }
         )
+    }
+
+    private fun MichaelState.Playing.checkWrongGuess(): MichaelState {
+        val cachedWord = word.toMutableList()
+        return if (activeRow + 1 == word.length) {
+            MichaelState.Lost
+        } else {
+            MichaelState.Playing(
+                word,
+                activeRow + 1,
+                tileRows.foldIndexed(emptyList()) { index, acc, tileRow ->
+                    if (index == activeRow) {
+                        acc + tileRow.copy(
+                            tiles = tileRow.tiles.mapIndexed { wordIndex, tile ->
+                                when {
+                                    tile.character == word[wordIndex] -> {
+                                        tile.copy(tileState = TileState.RIGHT).also {
+                                            cachedWord.remove(tile.character)
+                                        }
+                                    }
+                                    cachedWord.contains(tile.character) -> {
+                                        tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
+                                            .also {
+                                                cachedWord.remove(tile.character)
+                                            }
+                                    }
+                                    else -> tile.copy(tileState = TileState.NO_MATCH)
+                                }
+                            }
+                        )
+                    } else {
+                        acc + tileRow
+                    }
+                }
+            )
+        }
+
+
     }
 
     private fun MichaelState.Playing.newTileStateFromDeleteClick(): List<TileRow> {

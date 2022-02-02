@@ -1,6 +1,8 @@
 package com.mikesmith.michael
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
@@ -23,11 +25,15 @@ fun LetterTile(
     tileState: TileState,
     size: Dp,
     fontSize: TextUnit,
+    isDisabled: Boolean,
     onTileClick: (MichaelClickData) -> Unit,
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
+            .then(
+                if (isDisabled) Modifier.border(BorderStroke(2.dp, Color.White)) else Modifier
+            )
             .padding(4.dp)
             .background(backGround)
             .padding(2.dp)
@@ -48,7 +54,8 @@ fun LetterRow(
     tryPosition: Int,
     size: Dp,
     fontSize: TextUnit,
-    onTileClick: (MichaelClickData) -> Unit,
+    shouldDisable: Boolean = false,
+    onTileClick: (MichaelClickData) -> Unit = { },
 ) {
     Row(
         Modifier.fillMaxWidth()
@@ -62,14 +69,18 @@ fun LetterRow(
                 else -> MaterialTheme.colors.secondary
             }
 
+            val letterText =
+                if (shouldDisable) "" else tile.character?.uppercaseChar()?.toString() ?: ""
+
             LetterTile(
-                text = tile.character?.uppercaseChar()?.toString() ?: "",
+                text = letterText,
                 backGround = backGround,
                 tryPosition = tryPosition,
                 wordPosition = index,
                 tileState = tile.tileState,
                 size = size,
                 fontSize = fontSize,
+                isDisabled = shouldDisable,
                 onTileClick
             )
         }
