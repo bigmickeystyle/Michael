@@ -187,12 +187,14 @@ constructor(
                 .minus(
                     this.count { it.character == tile.character && it.tileState == TileState.RIGHT }
                 )
-            if (matchCount > 0 && tile.character != null && correctWord.contains(tile.character)) {
-                tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT).also {
-                    cachedWord.remove(it.character)
+            when {
+                matchCount > 0 && tile.character != null && correctWord.contains(tile.character) -> {
+                    tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT).also {
+                        cachedWord.remove(it.character)
+                    }
                 }
-            } else {
-                tile.copy(tileState = TileState.NO_MATCH)
+                tile.tileState == TileState.RIGHT -> tile
+                else -> tile.copy(tileState = TileState.NO_MATCH)
             }
         }
     }
