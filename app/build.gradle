@@ -20,8 +20,8 @@ android {
         applicationId "com.mikesmith.michael"
         minSdk 28
         targetSdk 32
-        versionCode 3
-        versionName "Barnes"
+        versionCode 4
+        versionName "Clough"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
