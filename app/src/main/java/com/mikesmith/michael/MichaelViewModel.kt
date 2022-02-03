@@ -36,7 +36,7 @@ constructor(
         setWord()
     }
 
-    private val lineList =
+    private val dictionaryEntries =
         context.assets.open("words.txt").bufferedReader().use { it.readText() }.split("\n")
 
     private fun setWord() {
@@ -51,7 +51,7 @@ constructor(
         gameState = MichaelState.Playing(
             currentWord,
             0,
-            currentWord.map {
+            (0..currentWord.length).map {
                 TileRow(
                     currentWord.map {
                         Tile(TileState.IDLE)
@@ -109,12 +109,14 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
                 if (this is MichaelState.Playing) {
-                    val guess = this.tileRows[activeRow].tiles.map { it.character }.joinToString("")
+                    val tiles = this.tileRows[activeRow].tiles
+                    val guess = tiles.map { it.character }.joinToString("")
                         .uppercase()
+
                     gameState = if (guess == word.uppercase()) {
                         toWonState()
                     } else {
-                        when (lineList.find { it.uppercase() == guess }) {
+                        when (dictionaryEntries.find { it == guess }) {
                             null -> MichaelState.Playing(
                                 word,
                                 activeRow,
@@ -147,10 +149,11 @@ constructor(
     }
 
     private fun MichaelState.Playing.checkWrongGuess(): MichaelState {
+
         val newTiles = tileRows.foldIndexed(emptyList<TileRow>()) { index, acc, tileRow ->
             if (index == activeRow) {
                 acc + tileRow.copy(
-                    tiles = tileRow.tiles.correctTiles(word).almostTiles(word)
+                    tiles = tileRow.tiles.correctTiles(word)
                 )
             } else {
                 acc + tileRow
@@ -170,30 +173,36 @@ constructor(
         }
     }
 
-    private fun List<Tile>.correctTiles(correctWord: String) = mapIndexed { index, tile ->
-        if (tile.character == correctWord[index]) {
-            tile.copy(tileState = TileState.RIGHT)
-        } else {
-            tile
-        }
-    }
+    private fun List<Tile>.correctTiles(correctWord: String): List<Tile> {
+        val wordMap = correctWord
+            .mapIndexed { index, char -> char to index }
+            .groupBy { it.first }
+            .mapValues { it.value.map { it.second } }
 
-    private fun List<Tile>.almostTiles(correctWord: String): List<Tile> {
-        //this is all bad
-        val cachedWord = correctWord.toMutableList()
-        return map { tile ->
-            val matchCount = cachedWord
-                .count { it == tile.character }
-                .minus(
-                    this.count { it.character == tile.character && it.tileState == TileState.RIGHT }
-                )
+        val matchSweep = mapIndexed { index, tile ->
+            wordMap[tile.character]?.let {
+                if (it.contains(index)) {
+                    tile.copy(tileState = TileState.RIGHT)
+                } else {
+                    tile
+                }
+            } ?: tile
+        }
+        return matchSweep.mapIndexed { index, tile ->
             when {
-                matchCount > 0 && tile.character != null && correctWord.contains(tile.character) -> {
-                    tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT).also {
-                        cachedWord.remove(it.character)
+                tile.tileState == TileState.RIGHT -> tile
+                wordMap[tile.character] != null -> {
+                    val exactMatchCount =
+                        matchSweep.count { it.character == tile.character && it.tileState == TileState.RIGHT }
+                    val partialMatchCount = wordMap[tile.character]!!.size - exactMatchCount
+                    val correctLettersBeforeIndex =
+                        take(index).count { it.character == tile.character }
+                    if (correctLettersBeforeIndex < partialMatchCount) {
+                        tile.copy(tileState = TileState.GOOD_BUT_NOT_RIGHT)
+                    } else {
+                        tile.copy(tileState = TileState.NO_MATCH)
                     }
                 }
-                tile.tileState == TileState.RIGHT -> tile
                 else -> tile.copy(tileState = TileState.NO_MATCH)
             }
         }
