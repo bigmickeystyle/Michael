@@ -1,4 +1,4 @@
-package com.mikesmith.michael
+package com.mikesmith.michael.components
 
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton

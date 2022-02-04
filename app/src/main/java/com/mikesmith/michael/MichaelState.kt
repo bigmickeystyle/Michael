@@ -15,6 +15,7 @@ sealed class MichaelState {
     data class Won(
         val word: String,
         val tileRows: List<TileRow>,
+        val newWord: String = ""
     ) : MichaelState()
 
     data class Lost(

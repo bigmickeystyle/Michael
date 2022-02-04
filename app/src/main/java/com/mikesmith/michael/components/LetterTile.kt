@@ -1,4 +1,4 @@
-package com.mikesmith.michael
+package com.mikesmith.michael.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -11,9 +11,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mikesmith.michael.MichaelClickData
+import com.mikesmith.michael.Tile
+import com.mikesmith.michael.TileState
 import com.mikesmith.michael.ui.theme.Gold
 
 @Composable
@@ -34,9 +39,7 @@ fun LetterTile(
             .then(
                 if (isDisabled) Modifier.border(BorderStroke(2.dp, Color.White)) else Modifier
             )
-            .padding(4.dp)
             .background(backGround)
-            .padding(2.dp)
             .width(size)
             .height(size)
             .clickable { onTileClick(MichaelClickData(tryPosition, wordPosition, tileState)) }
@@ -58,7 +61,8 @@ fun LetterRow(
     onTileClick: (MichaelClickData) -> Unit = { },
 ) {
     Row(
-        Modifier.fillMaxWidth()
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceAround
     ) {
         tiles.mapIndexed { index, tile ->
             val backGround = when (tile.tileState) {
@@ -85,4 +89,17 @@ fun LetterRow(
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun PreviewLetterRow() {
+    LetterRow(
+        tiles = listOf(
+        Tile(tileState = TileState.RIGHT, "H".first()),
+        Tile(tileState = TileState.RIGHT, "H".first()),
+        Tile(tileState = TileState.RIGHT, "H".first()),
+        Tile(tileState = TileState.RIGHT, "H".first()),
+    ), tryPosition = 0, size = 30.dp, fontSize = 16.sp
+    )
 }

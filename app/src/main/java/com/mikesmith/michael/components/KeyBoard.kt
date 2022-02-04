@@ -1,4 +1,4 @@
-package com.mikesmith.michael
+package com.mikesmith.michael.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mikesmith.michael.MichaelState.Playing
+import com.mikesmith.michael.MichaelState.Won
 import com.mikesmith.michael.network.MichaelService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -48,7 +50,7 @@ constructor(
     }
 
     fun onStartClick() {
-        gameState = MichaelState.Playing(
+        gameState = Playing(
             currentWord,
             0,
             (0..currentWord.length).map {
@@ -64,9 +66,9 @@ constructor(
     fun onTileClick(clickData: MichaelClickData) {
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
-                if (this is MichaelState.Playing) {
+                if (this is Playing) {
                     if (clickData.tryPosition == activeRow) {
-                        gameState = MichaelState.Playing(
+                        gameState = Playing(
                             word,
                             activeRow,
                             newTilesFromTileClick(clickData)
@@ -80,11 +82,16 @@ constructor(
     fun onKeyboardClick(clickedLetter: Char) {
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
-                if (this is MichaelState.Playing) {
-                    gameState = MichaelState.Playing(
-                        word,
-                        activeRow,
-                        newTileStateFromKeyboardClick(clickedLetter)
+                when (this) {
+                    is Playing -> gameState = Playing(
+                        word = word,
+                        activeRow = activeRow,
+                        tileRows = newTileStateFromKeyboardClick(clickedLetter)
+                    )
+                    is Won -> gameState = Won(
+                        word = word,
+                        tileRows = tileRows,
+                        newWord = newWord + clickedLetter
                     )
                 }
             }
@@ -94,8 +101,8 @@ constructor(
     fun onDeleteClick() {
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
-                if (this is MichaelState.Playing) {
-                    gameState = MichaelState.Playing(
+                if (this is Playing) {
+                    gameState = Playing(
                         word,
                         activeRow,
                         newTileStateFromDeleteClick()
@@ -108,7 +115,7 @@ constructor(
     fun onEnterClick() {
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
-                if (this is MichaelState.Playing) {
+                if (this is Playing) {
                     val tiles = this.tileRows[activeRow].tiles
                     val guess = tiles.map { it.character }.joinToString("")
                         .uppercase()
@@ -117,7 +124,7 @@ constructor(
                         toWonState()
                     } else {
                         when (dictionaryEntries.find { it == guess }) {
-                            null -> MichaelState.Playing(
+                            null -> Playing(
                                 word,
                                 activeRow,
                                 tileRows,
@@ -131,8 +138,8 @@ constructor(
         }
     }
 
-    private fun MichaelState.Playing.toWonState(): MichaelState {
-        return MichaelState.Won(
+    private fun Playing.toWonState(): MichaelState {
+        return Won(
             word,
             tileRows.foldIndexed(emptyList()) { index, acc, tileRow ->
                 if (index == activeRow) {
@@ -148,8 +155,7 @@ constructor(
         )
     }
 
-    private fun MichaelState.Playing.checkWrongGuess(): MichaelState {
-
+    private fun Playing.checkWrongGuess(): MichaelState {
         val newTiles = tileRows.foldIndexed(emptyList<TileRow>()) { index, acc, tileRow ->
             if (index == activeRow) {
                 acc + tileRow.copy(
@@ -159,13 +165,13 @@ constructor(
                 acc + tileRow
             }
         }
-        return if (activeRow + 1 == word.length) {
+        return if (activeRow + 1 == word.length + 1) {
             MichaelState.Lost(
                 word,
                 newTiles
             )
         } else {
-            MichaelState.Playing(
+            Playing(
                 word,
                 activeRow + 1,
                 newTiles
@@ -208,7 +214,7 @@ constructor(
         }
     }
 
-    private fun MichaelState.Playing.newTileStateFromDeleteClick(): List<TileRow> {
+    private fun Playing.newTileStateFromDeleteClick(): List<TileRow> {
         return tileRows.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(
@@ -228,7 +234,7 @@ constructor(
         }
     }
 
-    private fun MichaelState.Playing.newTileStateFromKeyboardClick(clickedLetter: Char): List<TileRow> {
+    private fun Playing.newTileStateFromKeyboardClick(clickedLetter: Char): List<TileRow> {
         return tileRows.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(
@@ -247,7 +253,7 @@ constructor(
         }
     }
 
-    private fun MichaelState.Playing.newTilesFromTileClick(clickData: MichaelClickData): List<TileRow> {
+    private fun Playing.newTilesFromTileClick(clickData: MichaelClickData): List<TileRow> {
         return tileRows.foldIndexed(emptyList()) { rowIndex, acc, element ->
             if (this.activeRow == rowIndex) {
                 acc + element.copy(
@@ -277,6 +283,38 @@ constructor(
     fun onRestartClick() {
         gameState = MichaelState.Idle.also {
             setWord()
+        }
+    }
+
+    fun onNewWordClick(newWord: String) {
+        if (newWord.length > 3) {
+            viewModelScope.launch {
+                val response = michaelService.setWordForToday(mapOf("wordForToday" to newWord))
+                if (response.isSuccessful) {
+                    setWord()
+                    gameState = Playing(
+                        newWord,
+                        0,
+                        (0..newWord.length).map {
+                            TileRow(
+                                newWord.map {
+                                    Tile(TileState.IDLE)
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    fun onDeleteNewWord() {
+        with(gameState) {
+            if (this is Won) {
+                gameState = this.copy(
+                    newWord = newWord.dropLast(1)
+                )
+            }
         }
     }
 }
