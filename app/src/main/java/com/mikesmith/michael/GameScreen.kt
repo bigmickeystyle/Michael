@@ -121,6 +121,7 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp, dicti
                         keyboardTileWidth = keyboardTileWidth(),
                         keyboardTileHeight = keyboardTileHeight(),
                         enterEnabled = state.tileRows[state.activeRow].tiles.last().character != null,
+                        keyboardRows = state.keyboard,
                         onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
                         onDeleteClick = { viewModel.onDeleteClick() },
                         onEnterClick = { viewModel.onEnterClick(dictionary) }
@@ -134,7 +135,8 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp, dicti
                         enterEnabled = true,
                         onTileClick = { viewModel.onKeyboardClick(it) },
                         onDeleteClick = { viewModel.onDeleteNewWord() },
-                        onEnterClick = { }
+                        onEnterClick = { },
+                        keyboardRows = state.keyboard
                     )
                 }
             }

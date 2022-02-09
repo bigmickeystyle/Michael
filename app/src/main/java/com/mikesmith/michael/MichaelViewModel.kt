@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mikesmith.michael.MichaelState.Playing
 import com.mikesmith.michael.MichaelState.Won
+import com.mikesmith.michael.components.*
 import com.mikesmith.michael.network.MichaelService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -45,15 +46,16 @@ constructor(
 
     fun onStartClick() {
         gameState = Playing(
-            currentWord,
-            0,
-            (0..currentWord.length).map {
+            word = currentWord,
+            activeRow = 0,
+            tileRows = (0..currentWord.length).map {
                 TileRow(
                     currentWord.map {
                         Tile(TileState.IDLE)
                     }
                 )
-            }
+            },
+            keyboard = keyList
         )
     }
 
@@ -65,7 +67,8 @@ constructor(
                         gameState = Playing(
                             word,
                             activeRow,
-                            newTilesFromTileClick(clickData)
+                            newTilesFromTileClick(clickData),
+                            keyboard
                         )
                     }
                 }
@@ -80,12 +83,14 @@ constructor(
                     is Playing -> gameState = Playing(
                         word = word,
                         activeRow = activeRow,
-                        tileRows = newTileStateFromKeyboardClick(clickedLetter)
+                        tileRows = newTileStateFromKeyboardClick(clickedLetter),
+                        keyboard
                     )
                     is Won -> gameState = Won(
                         word = word,
                         tileRows = tileRows,
-                        newWord = newWord + clickedLetter
+                        newWord = newWord + clickedLetter,
+                        keyboard = keyList
                     )
                 }
             }
@@ -99,7 +104,8 @@ constructor(
                     gameState = Playing(
                         word,
                         activeRow,
-                        newTileStateFromDeleteClick()
+                        newTileStateFromDeleteClick(),
+                        keyboard
                     )
                 }
             }
@@ -122,6 +128,7 @@ constructor(
                                 word,
                                 activeRow,
                                 tileRows,
+                                keyboard,
                                 true
                             )
                             else -> checkWrongGuess()
@@ -145,7 +152,8 @@ constructor(
                 } else {
                     acc + tileRow
                 }
-            }
+            },
+            keyList
         )
     }
 
@@ -159,6 +167,26 @@ constructor(
                 acc + tileRow
             }
         }
+        val guess = newTiles[activeRow].tiles
+        val guessWord = guess.map { it.character }
+        val newKeyboard = keyboard.map { row ->
+            row.map { key ->
+                if (guessWord.contains(key.letter)) {
+                    when (val tile = guess.find { it.character == key.letter }?.tileState) {
+                        null -> key
+                        TileState.IDLE -> key
+                        TileState.GUESSING -> key
+                        TileState.RIGHT -> key.copy(state = KeyboardKeyState.GREEN)
+                        TileState.GOOD_BUT_NOT_RIGHT -> key.copy(state = KeyboardKeyState.YELLOW)
+                        TileState.NO_MATCH -> key.copy(state = KeyboardKeyState.CROSSED)
+                    }
+                } else {
+                    key
+                }
+            }
+        }
+
+
         return if (activeRow + 1 == word.length + 1) {
             MichaelState.Lost(
                 word,
@@ -168,7 +196,8 @@ constructor(
             Playing(
                 word,
                 activeRow + 1,
-                newTiles
+                newTiles,
+                newKeyboard
             )
         }
     }
@@ -295,7 +324,8 @@ constructor(
                                     Tile(TileState.IDLE)
                                 }
                             )
-                        }
+                        },
+                        keyList
                     )
                 }
             }
