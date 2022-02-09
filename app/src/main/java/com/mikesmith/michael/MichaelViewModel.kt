@@ -1,6 +1,5 @@
 package com.mikesmith.michael
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,7 +9,6 @@ import com.mikesmith.michael.MichaelState.Playing
 import com.mikesmith.michael.MichaelState.Won
 import com.mikesmith.michael.network.MichaelService
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,7 +24,6 @@ enum class TileState {
 class MichaelViewModel
 @Inject
 constructor(
-    @ApplicationContext private val context: Context,
     private val michaelService: MichaelService,
 ) : ViewModel() {
 
@@ -37,9 +34,6 @@ constructor(
     init {
         setWord()
     }
-
-    private val dictionaryEntries =
-        context.assets.open("words.txt").bufferedReader().use { it.readText() }.split("\n")
 
     private fun setWord() {
         viewModelScope.launch {
@@ -112,7 +106,7 @@ constructor(
         }
     }
 
-    fun onEnterClick() {
+    fun onEnterClick(dictionaryEntries: List<String>) {
         viewModelScope.launch(Dispatchers.IO) {
             with(gameState) {
                 if (this is Playing) {

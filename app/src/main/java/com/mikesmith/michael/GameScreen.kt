@@ -24,7 +24,8 @@ import kotlinx.coroutines.launch
 private val initialWord = "MICHAEL"
 
 @Composable
-fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
+fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp, dictionary: List<String>) {
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val tileScale = 50
@@ -122,7 +123,7 @@ fun GameScreen(viewModel: MichaelViewModel = viewModel(), screenWidth: Dp) {
                         enterEnabled = state.tileRows[state.activeRow].tiles.last().character != null,
                         onTileClick = { clickedLetter -> viewModel.onKeyboardClick(clickedLetter) },
                         onDeleteClick = { viewModel.onDeleteClick() },
-                        onEnterClick = { viewModel.onEnterClick() }
+                        onEnterClick = { viewModel.onEnterClick(dictionary) }
                     )
                 }
                 is MichaelState.Won -> {
