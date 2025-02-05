@@ -38,9 +38,9 @@ constructor(
 
     private fun setWord() {
         viewModelScope.launch {
-            michaelService.getWordForToday().body()?.wordForToday?.let { word ->
-                currentWord = word.uppercase()
-            }
+//            michaelService.getWordForToday().body()?.wordForToday?.let { word ->
+//            }
+            currentWord = "hello"
         }
     }
 
@@ -86,12 +86,15 @@ constructor(
                         tileRows = newTileStateFromKeyboardClick(clickedLetter),
                         keyboard
                     )
+
                     is Won -> gameState = Won(
                         word = word,
                         tileRows = tileRows,
                         newWord = newWord + clickedLetter,
                         keyboard = keyList
                     )
+
+                    else -> Unit
                 }
             }
         }
@@ -131,6 +134,7 @@ constructor(
                                 keyboard,
                                 true
                             )
+
                             else -> checkWrongGuess()
                         }
                     }
@@ -232,6 +236,7 @@ constructor(
                         tile.copy(tileState = TileState.NO_MATCH)
                     }
                 }
+
                 else -> tile.copy(tileState = TileState.NO_MATCH)
             }
         }
@@ -244,9 +249,13 @@ constructor(
                     tiles = element.tiles.mapIndexed { index, tile ->
                         when {
                             tile.character != null && index == element.tiles.size - 1 -> tile.copy(
-                                character = null)
+                                character = null
+                            )
+
                             tile.character != null && element.tiles[index + 1].character == null -> tile.copy(
-                                character = null)
+                                character = null
+                            )
+
                             else -> tile
                         }
                     }
@@ -265,7 +274,9 @@ constructor(
                         when {
                             tile.character == null && index == 0 -> tile.copy(character = clickedLetter)
                             tile.character == null && element.tiles[index - 1].character != null -> tile.copy(
-                                character = clickedLetter)
+                                character = clickedLetter
+                            )
+
                             else -> tile
                         }
                     }
